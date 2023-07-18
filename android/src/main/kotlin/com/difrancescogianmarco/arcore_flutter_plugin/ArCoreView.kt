@@ -3,12 +3,16 @@ package com.difrancescogianmarco.arcore_flutter_plugin
 import android.app.Activity
 import android.app.Application
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Bundle
+import android.os.Environment
 import android.os.Handler
+import android.os.HandlerThread
 import android.util.Log
 import android.view.GestureDetector
 import android.view.MotionEvent
+import android.view.PixelCopy
 import android.view.View
 import android.widget.Toast
 import com.difrancescogianmarco.arcore_flutter_plugin.flutter_models.FlutterArCoreHitTestResult
@@ -24,22 +28,13 @@ import com.google.ar.sceneform.*
 import com.google.ar.sceneform.rendering.ModelRenderable
 import com.google.ar.sceneform.rendering.Texture
 import com.google.ar.sceneform.ux.AugmentedFaceNode
-import io.flutter.app.FlutterApplication
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.platform.PlatformView
-
-import android.graphics.Bitmap
-import android.os.Environment
-import android.view.PixelCopy
-import android.os.HandlerThread
-import android.content.ContextWrapper
-import java.io.FileOutputStream
 import java.io.File
+import java.io.FileOutputStream
 import java.io.IOException
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 
 class ArCoreView(val activity: Activity, context: Context, messenger: BinaryMessenger, id: Int, private val isAugmentedFaces: Boolean, private val debug: Boolean) : PlatformView, MethodChannel.MethodCallHandler {
     private val methodChannel: MethodChannel = MethodChannel(messenger, "arcore_flutter_plugin_$id")
@@ -176,7 +171,7 @@ class ArCoreView(val activity: Activity, context: Context, messenger: BinaryMess
             "addArCoreNode" -> {
                 debugLog(" addArCoreNode")
                 val map = call.arguments as HashMap<String, Any>
-                val flutterNode = FlutterArCoreNode(map);
+                val flutterNode = FlutterArCoreNode(map)
                 onAddNode(flutterNode, result)
             }
             "addArCoreNodeWithAnchor" -> {
@@ -324,7 +319,7 @@ class ArCoreView(val activity: Activity, context: Context, messenger: BinaryMess
             // create bitmap screen capture
 
             // Create a bitmap the size of the scene view.
-            val bitmap: Bitmap = Bitmap.createBitmap(arSceneView!!.getWidth(), arSceneView!!.getHeight(),
+            val bitmap: Bitmap = Bitmap.createBitmap(arSceneView!!.width, arSceneView!!.height,
                     Bitmap.Config.ARGB_8888)
 
             // Create a handler thread to offload the processing of the image.
@@ -337,11 +332,11 @@ class ArCoreView(val activity: Activity, context: Context, messenger: BinaryMess
                     try {
                         saveBitmapToDisk(bitmap)
                     } catch (e: IOException) {
-                        e.printStackTrace();
+                        e.printStackTrace()
                     }
                 }
                 handlerThread.quitSafely()
-            }, Handler(handlerThread.getLooper()))
+            }, Handler(handlerThread.looper))
 
         } catch (e: Throwable) {
             // Several error may come out with file handling or DOM
@@ -369,7 +364,7 @@ class ArCoreView(val activity: Activity, context: Context, messenger: BinaryMess
         fileOutputStream.flush()
         fileOutputStream.close()
 //        Log.i("path","fileoutputstream closed")
-        return mPath as String
+        return mPath
     }
 
     private fun arScenViewInit(call: MethodCall, result: MethodChannel.Result, context: Context) {
@@ -464,7 +459,7 @@ class ArCoreView(val activity: Activity, context: Context, messenger: BinaryMess
 
     fun attachNodeToParent(node: Node?, parentNodeName: String?) {
         if (parentNodeName != null) {
-            debugLog(parentNodeName);
+            debugLog(parentNodeName)
             val parentNode: Node? = arSceneView?.scene?.findByName(parentNodeName)
             parentNode?.addChild(node)
         } else {
@@ -476,7 +471,7 @@ class ArCoreView(val activity: Activity, context: Context, messenger: BinaryMess
     fun removeNode(name: String, result: MethodChannel.Result) {
         val node = arSceneView?.scene?.findByName(name)
         if (node != null) {
-            arSceneView?.scene?.removeChild(node);
+            arSceneView?.scene?.removeChild(node)
             debugLog("removed ${node.name}")
         }
 
@@ -546,14 +541,14 @@ class ArCoreView(val activity: Activity, context: Context, messenger: BinaryMess
                         config.augmentedFaceMode = Config.AugmentedFaceMode.MESH3D
                     }
                     config.updateMode = Config.UpdateMode.LATEST_CAMERA_IMAGE
-                    config.focusMode = Config.FocusMode.AUTO;
+                    config.focusMode = Config.FocusMode.AUTO
                     session.configure(config)
                     arSceneView?.setupSession(session)
                 }
             } catch (ex: UnavailableUserDeclinedInstallationException) {
                 // Display an appropriate message to the user zand return gracefully.
                 Toast.makeText(activity, "TODO: handle exception " + ex.localizedMessage, Toast.LENGTH_LONG)
-                        .show();
+                        .show()
                 return
             } catch (e: UnavailableException) {
                 ArCoreUtils.handleSessionException(activity, e)
@@ -594,8 +589,8 @@ class ArCoreView(val activity: Activity, context: Context, messenger: BinaryMess
                 arSceneView = null
 
             }catch (e : Exception){
-                e.printStackTrace();
-           }
+                e.printStackTrace()
+            }
         }
     }
 
