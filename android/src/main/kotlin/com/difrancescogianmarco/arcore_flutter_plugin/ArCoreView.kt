@@ -26,6 +26,7 @@ import com.google.ar.core.exceptions.UnavailableException
 import com.google.ar.core.exceptions.UnavailableUserDeclinedInstallationException
 import com.google.ar.sceneform.*
 import com.google.ar.sceneform.rendering.ModelRenderable
+import com.google.ar.sceneform.rendering.Renderable
 import com.google.ar.sceneform.rendering.Texture
 import com.google.ar.sceneform.ux.AugmentedFaceNode
 import io.flutter.plugin.common.BinaryMessenger
@@ -36,8 +37,10 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 
-class ArCoreView(val activity: Activity, context: Context, messenger: BinaryMessenger, id: Int, private val isAugmentedFaces: Boolean, private val debug: Boolean) : PlatformView, MethodChannel.MethodCallHandler {
+class ArCoreView(val activity: Activity, context: Context, messenger: BinaryMessenger, id: Int, private val isAugmentedFaces: Boolean, private val debug: Boolean) : PlatformView,
+    MethodChannel.MethodCallHandler {
     private val methodChannel: MethodChannel = MethodChannel(messenger, "arcore_flutter_plugin_$id")
+
     //       private val activity: Activity = (context.applicationContext as FlutterApplication).currentActivity
     lateinit var activityLifecycleCallbacks: Application.ActivityLifecycleCallbacks
     private var installRequested: Boolean = false
@@ -59,17 +62,17 @@ class ArCoreView(val activity: Activity, context: Context, messenger: BinaryMess
         arSceneView = ArSceneView(context)
         // Set up a tap gesture detector.
         gestureDetector = GestureDetector(
-                context,
-                object : GestureDetector.SimpleOnGestureListener() {
-                    override fun onSingleTapUp(e: MotionEvent): Boolean {
-                        onSingleTap(e)
-                        return true
-                    }
+            context,
+            object : GestureDetector.SimpleOnGestureListener() {
+                override fun onSingleTapUp(e: MotionEvent): Boolean {
+                    onSingleTap(e)
+                    return true
+                }
 
-                    override fun onDown(e: MotionEvent): Boolean {
-                        return true
-                    }
-                })
+                override fun onDown(e: MotionEvent): Boolean {
+                    return true
+                }
+            })
 
         sceneUpdateListener = Scene.OnUpdateListener { frameTime ->
 
@@ -157,9 +160,9 @@ class ArCoreView(val activity: Activity, context: Context, messenger: BinaryMess
         // Load the face mesh texture.
         //                .setSource(activity, Uri.parse("fox_face_mesh_texture.png"))
         Texture.builder()
-                .setSource(BitmapFactory.decodeByteArray(textureBytes, 0, textureBytes!!.size))
-                .build()
-                .thenAccept { texture -> faceMeshTexture = texture }
+            .setSource(BitmapFactory.decodeByteArray(textureBytes, 0, textureBytes!!.size))
+            .build()
+            .thenAccept { texture -> faceMeshTexture = texture }
     }
 
 
@@ -168,55 +171,66 @@ class ArCoreView(val activity: Activity, context: Context, messenger: BinaryMess
             "init" -> {
                 arScenViewInit(call, result, activity)
             }
+
             "addArCoreNode" -> {
                 debugLog(" addArCoreNode")
                 val map = call.arguments as HashMap<String, Any>
                 val flutterNode = FlutterArCoreNode(map)
                 onAddNode(flutterNode, result)
             }
+
             "addArCoreNodeWithAnchor" -> {
                 debugLog(" addArCoreNode")
                 val map = call.arguments as HashMap<String, Any>
                 val flutterNode = FlutterArCoreNode(map)
                 addNodeWithAnchor(flutterNode, result)
             }
+
             "removeARCoreNode" -> {
                 debugLog(" removeARCoreNode")
                 val map = call.arguments as HashMap<String, Any>
                 removeNode(map["nodeName"] as String, result)
             }
+
             "positionChanged" -> {
                 debugLog(" positionChanged")
 
             }
+
             "rotationChanged" -> {
                 debugLog(" rotationChanged")
                 updateRotation(call, result)
 
             }
+
             "updateMaterials" -> {
                 debugLog(" updateMaterials")
                 updateMaterials(call, result)
 
             }
+
             "takeScreenshot" -> {
                 debugLog(" takeScreenshot")
                 takeScreenshot(call, result)
 
             }
+
             "loadMesh" -> {
                 val map = call.arguments as HashMap<String, Any>
                 val textureBytes = map["textureBytes"] as ByteArray
                 loadMesh(textureBytes)
             }
+
             "dispose" -> {
                 debugLog("Disposing ARCore now")
                 dispose()
             }
+
             "resume" -> {
                 debugLog("Resuming ARCore now")
                 onResume()
             }
+
             "getTrackingState" -> {
                 debugLog("1/3: Requested tracking state, returning that back to Flutter now")
 
@@ -224,33 +238,35 @@ class ArCoreView(val activity: Activity, context: Context, messenger: BinaryMess
                 debugLog("2/3: Tracking state is " + trState.toString())
                 methodChannel.invokeMethod("getTrackingState", trState.toString())
             }
+
             "togglePlaneRenderer" -> {
-                debugLog(" Toggle planeRenderer visibility" )
+                debugLog(" Toggle planeRenderer visibility")
                 arSceneView!!.planeRenderer.isVisible = !arSceneView!!.planeRenderer.isVisible
             }
+
             else -> {
             }
         }
     }
 
-/*    fun maybeEnableArButton() {
-        Log.i(TAG,"maybeEnableArButton" )
-        try{
-            val availability = ArCoreApk.getInstance().checkAvailability(activity.applicationContext)
-            if (availability.isTransient) {
-                // Re-query at 5Hz while compatibility is checked in the background.
-                Handler().postDelayed({ maybeEnableArButton() }, 200)
+    /*    fun maybeEnableArButton() {
+            Log.i(TAG,"maybeEnableArButton" )
+            try{
+                val availability = ArCoreApk.getInstance().checkAvailability(activity.applicationContext)
+                if (availability.isTransient) {
+                    // Re-query at 5Hz while compatibility is checked in the background.
+                    Handler().postDelayed({ maybeEnableArButton() }, 200)
+                }
+                if (availability.isSupported) {
+                    debugLog("AR SUPPORTED")
+                } else { // Unsupported or unknown.
+                    debugLog("AR NOT SUPPORTED")
+                }
+            }catch (ex:Exception){
+                Log.i(TAG,"maybeEnableArButton ${ex.localizedMessage}" )
             }
-            if (availability.isSupported) {
-                debugLog("AR SUPPORTED")
-            } else { // Unsupported or unknown.
-                debugLog("AR NOT SUPPORTED")
-            }
-        }catch (ex:Exception){
-            Log.i(TAG,"maybeEnableArButton ${ex.localizedMessage}" )
-        }
 
-    }*/
+        }*/
 
     private fun setupLifeCycle(context: Context) {
         activityLifecycleCallbacks = object : Application.ActivityLifecycleCallbacks {
@@ -319,8 +335,10 @@ class ArCoreView(val activity: Activity, context: Context, messenger: BinaryMess
             // create bitmap screen capture
 
             // Create a bitmap the size of the scene view.
-            val bitmap: Bitmap = Bitmap.createBitmap(arSceneView!!.width, arSceneView!!.height,
-                    Bitmap.Config.ARGB_8888)
+            val bitmap: Bitmap = Bitmap.createBitmap(
+                arSceneView!!.width, arSceneView!!.height,
+                Bitmap.Config.ARGB_8888
+            )
 
             // Create a handler thread to offload the processing of the image.
             val handlerThread = HandlerThread("PixelCopier")
@@ -346,7 +364,7 @@ class ArCoreView(val activity: Activity, context: Context, messenger: BinaryMess
     }
 
     @Throws(IOException::class)
-    fun saveBitmapToDisk(bitmap: Bitmap):String {
+    fun saveBitmapToDisk(bitmap: Bitmap): String {
 
 //        val now = LocalDateTime.now()
 //        now.format(DateTimeFormatter.ofPattern("M/d/y H:m:ss"))
@@ -354,7 +372,7 @@ class ArCoreView(val activity: Activity, context: Context, messenger: BinaryMess
         // android/data/com.hswo.mvc_2021.hswo_mvc_2021_flutter_ar/files/
         // activity.applicationContext.getFilesDir().toString() //doesnt work!!
         // Environment.getExternalStorageDirectory()
-        val mPath: String =  Environment.getExternalStorageDirectory().toString() + "/DCIM/" + now + ".jpg"
+        val mPath: String = Environment.getExternalStorageDirectory().toString() + "/DCIM/" + now + ".jpg"
         val mediaFile = File(mPath)
         debugLog(mediaFile.toString())
         //Log.i("path","fileoutputstream opened")
@@ -372,18 +390,18 @@ class ArCoreView(val activity: Activity, context: Context, messenger: BinaryMess
         val enableTapRecognizer: Boolean? = call.argument("enableTapRecognizer")
         if (enableTapRecognizer != null && enableTapRecognizer) {
             arSceneView
-                    ?.scene
-                    ?.setOnTouchListener { hitTestResult: HitTestResult, event: MotionEvent? ->
+                ?.scene
+                ?.setOnTouchListener { hitTestResult: HitTestResult, event: MotionEvent? ->
 
-                        if (hitTestResult.node != null) {
-                            debugLog(" onNodeTap " + hitTestResult.node?.name)
-                            debugLog(hitTestResult.node?.localPosition.toString())
-                            debugLog(hitTestResult.node?.worldPosition.toString())
-                            methodChannel.invokeMethod("onNodeTap", hitTestResult.node?.name)
-                            return@setOnTouchListener true
-                        }
-                        return@setOnTouchListener gestureDetector.onTouchEvent(event)
+                    if (hitTestResult.node != null) {
+                        debugLog(" onNodeTap " + hitTestResult.node?.name)
+                        debugLog(hitTestResult.node?.localPosition.toString())
+                        debugLog(hitTestResult.node?.worldPosition.toString())
+                        methodChannel.invokeMethod("onNodeTap", hitTestResult.node?.name)
+                        return@setOnTouchListener true
                     }
+                    return@setOnTouchListener gestureDetector.onTouchEvent(event)
+                }
         }
         val enableUpdateListener: Boolean? = call.argument("enableUpdateListener")
         if (enableUpdateListener != null && enableUpdateListener) {
@@ -397,23 +415,36 @@ class ArCoreView(val activity: Activity, context: Context, messenger: BinaryMess
             debugLog(" The plane renderer (enablePlaneRenderer) is set to " + enablePlaneRenderer.toString())
             arSceneView!!.planeRenderer.isVisible = false
         }
-        
+
         result.success(null)
     }
 
     fun addNodeWithAnchor(flutterArCoreNode: FlutterArCoreNode, result: MethodChannel.Result) {
+        Log.i(TAG, "ArCoreView().addNodeWithAnchor() called with flutterArCoreNode:$flutterArCoreNode")
 
         if (arSceneView == null) {
+            Log.i(TAG, "Returning from ArCoreView().addNodeWithAnchor() because arSceneView is null")
             return
         }
 
-        RenderableCustomFactory.makeRenderable(activity.applicationContext, flutterArCoreNode) { renderable, t ->
-            if (t != null) {
-                result.error("Make Renderable Error", t.localizedMessage, null)
+        Log.i(TAG, "Going To Get renderable in ArCoreView().addNodeWithAnchor()")
+        RenderableCustomFactory.makeRenderable(activity.applicationContext, flutterArCoreNode) { renderable: Renderable?, throwable ->
+            Log.i(TAG, "Completed RenderableCustomFactory.makeRenderable")
+            Log.i(TAG, "Got renderable in ArCoreView().addNodeWithAnchor():$renderable")
+            Log.i(TAG, "Got throwable in ArCoreView().addNodeWithAnchor():$throwable")
+
+            if (throwable != null) {
+                result.error("Make Renderable Error", throwable.localizedMessage, null)
+                Log.i(TAG, "Returning from ArCoreView().addNodeWithAnchor().RenderableCustomFactory.makeRenderable() because throwable is not null")
                 return@makeRenderable
             }
+
             val myAnchor = arSceneView?.session?.createAnchor(Pose(flutterArCoreNode.getPosition(), flutterArCoreNode.getRotation()))
+            Log.i(TAG, "myAnchor in ArCoreView().addNodeWithAnchor().RenderableCustomFactory.makeRenderable():$myAnchor")
+
             if (myAnchor != null) {
+                Log.i(TAG, "myAnchor is not null")
+
                 val anchorNode = AnchorNode(myAnchor)
                 anchorNode.name = flutterArCoreNode.name
                 anchorNode.renderable = renderable
@@ -425,19 +456,39 @@ class ArCoreView(val activity: Activity, context: Context, messenger: BinaryMess
                     node.parentNodeName = flutterArCoreNode.name
                     onAddNode(node, null)
                 }
+            } else {
+                Log.i(TAG, "myAnchor is null")
             }
             result.success(null)
         }
     }
 
     fun onAddNode(flutterArCoreNode: FlutterArCoreNode, result: MethodChannel.Result?) {
+        Log.i(TAG, "ArCoreView().onAddNode() called with flutterArCoreNode:$flutterArCoreNode")
 
         debugLog(flutterArCoreNode.toString())
+        Log.i(TAG, "Going To Get renderable in ArCoreView().onAddNode()")
+
         NodeFactory.makeNode(activity.applicationContext, flutterArCoreNode, debug) { node, throwable ->
+
+            Log.i(TAG, "Completed NodeFactory.makeNode")
+            Log.i(TAG, "Got node in ArCoreView().onAddNode():$node")
+            Log.i(TAG, "Got throwable in ArCoreView().onAddNode():$throwable")
 
             debugLog("onAddNode inserted ${node?.name}")
 
-/*            if (flutterArCoreNode.parentNodeName != null) {
+            if (throwable != null) {
+                result.error("Make Renderable Error", throwable.localizedMessage, null)
+                Log.i(TAG, "Returning from ArCoreView().addNodeWithAnchor().RenderableCustomFactory.makeRenderable() because throwable is not null")
+                return@makeNode;
+            }
+
+            if(node == null){
+                Log.i(TAG, "node is null")
+                return@makeNode;
+            }
+
+            /*if (flutterArCoreNode.parentNodeName != null) {
                 debugLog(flutterArCoreNode.parentNodeName);
                 val parentNode: Node? = arSceneView?.scene?.findByName(flutterArCoreNode.parentNodeName)
                 parentNode?.addChild(node)
@@ -445,12 +496,11 @@ class ArCoreView(val activity: Activity, context: Context, messenger: BinaryMess
                 debugLog("addNodeToSceneWithGeometry: NOT PARENT_NODE_NAME")
                 arSceneView?.scene?.addChild(node)
             }*/
-            if (node != null) {
-                attachNodeToParent(node, flutterArCoreNode.parentNodeName)
-                for (n in flutterArCoreNode.children) {
-                    n.parentNodeName = flutterArCoreNode.name
-                    onAddNode(n, null)
-                }
+
+            attachNodeToParent(node, flutterArCoreNode.parentNodeName)
+            for (n in flutterArCoreNode.children) {
+                n.parentNodeName = flutterArCoreNode.name
+                onAddNode(n, null)
             }
 
         }
@@ -548,7 +598,7 @@ class ArCoreView(val activity: Activity, context: Context, messenger: BinaryMess
             } catch (ex: UnavailableUserDeclinedInstallationException) {
                 // Display an appropriate message to the user zand return gracefully.
                 Toast.makeText(activity, "TODO: handle exception " + ex.localizedMessage, Toast.LENGTH_LONG)
-                        .show()
+                    .show()
                 return
             } catch (e: UnavailableException) {
                 ArCoreUtils.handleSessionException(activity, e)
@@ -577,7 +627,7 @@ class ArCoreView(val activity: Activity, context: Context, messenger: BinaryMess
     }
 
     fun onDestroy() {
-      if (arSceneView != null) {
+        if (arSceneView != null) {
             debugLog("Goodbye ARCore! Destroying the Activity now 7.")
 
             try {
@@ -588,7 +638,7 @@ class ArCoreView(val activity: Activity, context: Context, messenger: BinaryMess
                 arSceneView?.destroy()
                 arSceneView = null
 
-            }catch (e : Exception){
+            } catch (e: Exception) {
                 e.printStackTrace()
             }
         }
