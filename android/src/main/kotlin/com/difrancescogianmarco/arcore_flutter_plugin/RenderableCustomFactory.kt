@@ -41,6 +41,7 @@ class RenderableCustomFactory {
         fun makeRenderable(
             context: Context, flutterArCoreNode: FlutterArCoreNode, handler: RenderableHandler
         ) {
+            Log.i(TAG, "RenderableCustomFactory().makeRenderable() called for flutterArCoreNode.dartType:${flutterArCoreNode.dartType}")
 
             if (flutterArCoreNode.dartType == "ArCoreReferenceNode") {
 
@@ -78,6 +79,8 @@ class RenderableCustomFactory {
             } else {
 
                 if (flutterArCoreNode.image != null) {
+                    Log.i(TAG, "RenderableCustomFactory().makeRenderable() called for image")
+
                     if (flutterArCoreNode.image.bytes == null) {
                         Log.i(TAG, "Image Bytes Are Null")
                         handler(null, null)
@@ -106,6 +109,8 @@ class RenderableCustomFactory {
                         return@exceptionally null
                     }
                 } else if (flutterArCoreNode.video != null) {
+                    Log.i(TAG, "RenderableCustomFactory().makeRenderable() called for video")
+
                     if (flutterArCoreNode.video.bytes == null && flutterArCoreNode.video.url.isNullOrEmpty()) {
                         Log.i(TAG, "Video Bytes and Url Are Null")
                         handler(null, null)
@@ -114,13 +119,17 @@ class RenderableCustomFactory {
 
                     try {
                         if (!flutterArCoreNode.video.url.isNullOrEmpty()) {
+                            Log.i(TAG, "Video Data Available.")
+
                             val video = VideoView(context)
                             video.layoutParams = LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT)
                             val videoUri: Uri = Uri.parse(flutterArCoreNode.video.url)
 
                             video.setVideoURI(videoUri)
 
+                            Log.e(TAG, "Getting Video renderable Started", null)
                             ViewRenderable.builder().setView(context, video).build().thenAccept { renderable: ViewRenderable ->
+                                Log.e(TAG, "Video renderable got", null)
                                 handler(
                                     renderable, null
                                 )
@@ -140,6 +149,8 @@ class RenderableCustomFactory {
                         Toast.makeText(context, ex.toString(), Toast.LENGTH_LONG)
                     }
                 } else {
+                    Log.i(TAG, "RenderableCustomFactory().makeRenderable() called for else")
+
                     makeMaterial(context, flutterArCoreNode) { material, throwable ->
                         if (throwable != null) {
                             handler(null, throwable)
