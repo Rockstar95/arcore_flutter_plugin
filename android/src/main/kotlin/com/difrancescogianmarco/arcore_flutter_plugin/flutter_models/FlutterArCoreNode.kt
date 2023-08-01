@@ -96,7 +96,9 @@ class FlutterArCoreNode(map: HashMap<String, *>) {
                 "position: $position\n" +
                 "scale: $scale\n" +
                 "rotation: $rotation\n" +
-                "parentNodeName: $parentNodeName"
+                "parentNodeName: $parentNodeName\n" +
+                "image not null: ${image != null}\n" +
+                "video not null: ${video != null}\n"
     }
 
 }
