@@ -1,4 +1,5 @@
 import 'package:arcore_flutter_plugin/src/arcore_image.dart';
+import 'package:arcore_flutter_plugin/src/arcore_video_node.dart';
 import 'package:arcore_flutter_plugin/src/shape/arcore_shape.dart';
 import 'package:arcore_flutter_plugin/src/utils/random_string.dart'
     as random_string;
@@ -10,6 +11,7 @@ class ArCoreNode {
   ArCoreNode({
     this.shape,
     this.image,
+    this.video,
     String? name,
     Vector3? position,
     Vector3? scale,
@@ -35,6 +37,8 @@ class ArCoreNode {
 
   final ArCoreImage? image;
 
+  final ArCoreVideoNode? video;
+
   Map<String, dynamic> toMap() => <String, dynamic>{
         'dartType': runtimeType.toString(),
         'shape': shape?.toMap(),
@@ -43,6 +47,7 @@ class ArCoreNode {
         'rotation': convertVector4ToMap(rotation?.value),
         'name': name,
         'image': image?.toMap(),
+        'video': video?.toMap(),
         'children':
             this.children?.map((arCoreNode) => arCoreNode.toMap()).toList(),
       }..removeWhere((String k, dynamic v) => v == null);
