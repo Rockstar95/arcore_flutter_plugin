@@ -419,7 +419,7 @@ class ArCoreView(val activity: Activity, context: Context, messenger: BinaryMess
         result.success(null)
     }
 
-    fun addNodeWithAnchor(flutterArCoreNode: FlutterArCoreNode, result: MethodChannel.Result) {
+    fun addNodeWithAnchor(flutterArCoreNode: FlutterArCoreNode, result: MethodChannel.Result?) {
         Log.i(TAG, "ArCoreView().addNodeWithAnchor() called with flutterArCoreNode:$flutterArCoreNode")
 
         if (arSceneView == null) {
@@ -434,7 +434,7 @@ class ArCoreView(val activity: Activity, context: Context, messenger: BinaryMess
             Log.i(TAG, "Got throwable in ArCoreView().addNodeWithAnchor():$throwable")
 
             if (throwable != null) {
-                result.error("Make Renderable Error", throwable.localizedMessage, null)
+                result?.error("Make Renderable Error", throwable.localizedMessage, null)
                 Log.i(TAG, "Returning from ArCoreView().addNodeWithAnchor().RenderableCustomFactory.makeRenderable() because throwable is not null")
                 return@makeRenderable
             }
@@ -459,7 +459,7 @@ class ArCoreView(val activity: Activity, context: Context, messenger: BinaryMess
             } else {
                 Log.i(TAG, "myAnchor is null")
             }
-            result.success(null)
+            result?.success(null)
         }
     }
 
@@ -478,7 +478,7 @@ class ArCoreView(val activity: Activity, context: Context, messenger: BinaryMess
             debugLog("onAddNode inserted ${node?.name}")
 
             if (throwable != null) {
-                result.error("Make Renderable Error", throwable.localizedMessage, null)
+                result?.error("Make Renderable Error", throwable.localizedMessage, null)
                 Log.i(TAG, "Returning from ArCoreView().addNodeWithAnchor().RenderableCustomFactory.makeRenderable() because throwable is not null")
                 return@makeNode;
             }
