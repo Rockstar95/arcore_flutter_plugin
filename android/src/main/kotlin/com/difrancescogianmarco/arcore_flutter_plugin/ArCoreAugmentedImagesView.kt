@@ -43,7 +43,7 @@ class ArCoreAugmentedImagesView(activity: Activity, context: Context, messenger:
 
     init {
 
-        sceneUpdateListener = Scene.OnUpdateListener { frameTime ->
+        sceneUpdateListener = Scene.OnUpdateListener {
 
             val frame = arSceneView?.arFrame ?: return@OnUpdateListener
 
@@ -282,7 +282,7 @@ class ArCoreAugmentedImagesView(activity: Activity, context: Context, messenger:
             session.configure(config)
             arSceneView?.setupSession(session)
         } catch (ex: Exception) {
-            debugLog( ex.localizedMessage)
+            ex.localizedMessage?.let { debugLog(it) }
         }
     }
 
@@ -297,7 +297,7 @@ class ArCoreAugmentedImagesView(activity: Activity, context: Context, messenger:
                 addMultipleImagesToAugmentedImageDatabase(config, bytesMap, session)
             }
         } catch (ex: Exception) {
-            debugLog( ex.localizedMessage)
+            ex.localizedMessage?.let { debugLog(it) }
         }
     }
 
@@ -313,10 +313,11 @@ class ArCoreAugmentedImagesView(activity: Activity, context: Context, messenger:
                         augmentedImageDatabase.addImage(key, augmentedImageBitmap)
                     } catch (ex: Exception) {
                         debugLog("Image with the title $key cannot be added to the database. " +
-                        "The exception was thrown: " + ex?.toString())
+                        "The exception was thrown: " + ex.toString()
+                        )
                     }
                 }
-                if (augmentedImageDatabase?.getNumImages() == 0) {
+                if (augmentedImageDatabase.numImages == 0) {
                     throw Exception("Could not setup augmented image database")
                 }
                 config.augmentedImageDatabase = augmentedImageDatabase
@@ -336,7 +337,7 @@ class ArCoreAugmentedImagesView(activity: Activity, context: Context, messenger:
             config.augmentedImageDatabase = augmentedImageDatabase
             return true
         } catch (ex:Exception) {
-            debugLog(ex.localizedMessage)
+            ex.localizedMessage?.let { debugLog(it) }
             return false
         }
     }
@@ -356,11 +357,11 @@ class ArCoreAugmentedImagesView(activity: Activity, context: Context, messenger:
 
     private fun loadAugmentedImageBitmap(bitmapdata: ByteArray): Bitmap? {
         debugLog( "loadAugmentedImageBitmap")
-       try {
-           return  BitmapFactory.decodeByteArray(bitmapdata, 0, bitmapdata.size)
+        return try {
+            BitmapFactory.decodeByteArray(bitmapdata, 0, bitmapdata.size)
         } catch (e: Exception) {
             Log.e(TAG, "IO exception loading augmented image bitmap.", e)
-            return  null
+            null
         }
     }
 }
